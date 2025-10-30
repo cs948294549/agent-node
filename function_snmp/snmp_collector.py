@@ -1,0 +1,85 @@
+"""
+SNMP请求封装模块
+
+提供统一的SNMP请求接口，简化SNMP操作的调用方式
+"""
+import logging
+from typing import Optional, Any
+from function_snmp.snmpAgent import snmpget
+from function_snmp.oid_parser_factory import global_oid_parser_factory
+
+logger = logging.getLogger(__name__)
+
+
+def snmp_request(ip: str, community: str, oid: str, request_type: str = 'walk', ttl: int = 300) -> Optional[Any]:
+    """
+    统一的SNMP请求封装函数
+    
+    Args:
+        ip: 设备IP地址
+        community: SNMP团体字符串
+        oid: OID或OID前缀
+        request_type: 请求类型，'get'或'walk'
+        ttl: 当request_type为'walk'时的缓存有效期（秒）
+            设置为0表示不使用缓存
+    
+    Returns:
+        Optional[Any]: 
+            - 当request_type为'get'时，返回SNMP GET的原始结果
+            - 当request_type为'walk'时，返回通过工厂模式解析后的数据
+    
+    Raises:
+        ValueError: 当request_type无效或OID未注册时抛出
+    """
+    if request_type == 'get':
+        # SNMP GET直接调用snmpAgent的snmpget方法
+        logger.debug(f"执行SNMP GET: IP={ip}, OID={oid}")
+        return snmpget(ip, community, oid)
+    elif request_type == 'walk':
+        # SNMP WALK通过工厂模式返回数据
+        logger.debug(f"执行SNMP WALK (工厂模式): IP={ip}, OID={oid}, TTL={ttl}秒")
+        parser = global_oid_parser_factory.get_parser(oid)
+        if not parser:
+            error_msg = f"OID {oid} 未注册对应的解析器"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        # 调用解析器的collect_and_parse方法，传入ttl参数
+        return parser.collect_and_parse(ip, community, ttl)
+    else:
+        raise ValueError(f"无效的request_type: {request_type}，必须为'get'或'walk'")
+
+
+def snmp_get(ip: str, community: str, oid: str) -> Optional[Any]:
+    """
+    直接调用SNMP GET操作
+    
+    Args:
+        ip: 设备IP地址
+        community: SNMP团体字符串
+        oid: 完整的OID
+    
+    Returns:
+        Optional[Any]: SNMP GET的原始结果
+    """
+    return snmp_request(ip, community, oid, request_type='get')
+
+
+def snmp_walk(ip: str, community: str, oid: str, ttl: int = 300) -> Optional[Any]:
+    """
+    通过工厂模式执行SNMP WALK操作
+    
+    Args:
+        ip: 设备IP地址
+        community: SNMP团体字符串
+        oid: OID或OID前缀
+        ttl: 缓存有效期（秒）
+            设置为0表示不使用缓存
+    
+    Returns:
+        Optional[Any]: 解析后的数据
+    
+    Raises:
+        ValueError: 当OID未注册时抛出
+    """
+    return snmp_request(ip, community, oid, request_type='walk', ttl=ttl)
