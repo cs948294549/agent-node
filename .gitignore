@@ -49,3 +49,4 @@ private_config.py
 test.py
 test1.py
 test*.py
+*.json
