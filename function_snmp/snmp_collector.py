@@ -83,3 +83,11 @@ def snmp_walk(ip: str, community: str, oid: str, ttl: int = 300) -> Optional[Any
         ValueError: 当OID未注册时抛出
     """
     return snmp_request(ip, community, oid, request_type='walk', ttl=ttl)
+
+
+
+if __name__ == '__main__':
+    import time
+    for i in range(2):
+        a = snmp_walk("10.10.0.1", "mmmm", "1.3.6.1.2.1.2.2.1.2", ttl=10)
+        print(a)

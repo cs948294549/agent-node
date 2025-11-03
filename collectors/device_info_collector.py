@@ -8,6 +8,7 @@
 """
 import logging
 import re
+import time
 from typing import Dict, List, Any, Optional, Protocol
 from function_snmp.snmp_collector import snmp_get, snmp_walk
 
@@ -208,14 +209,14 @@ class HuaweiDeviceInfoCollector:
         
         # 采集华为设备型号
         patch_array = snmp_walk(ip, community, huawei_oids.get('hwPatchInstall'))
-        patch = list(patch_array.values())[0]
-        if patch is not None:
-            patch = patch.decode("utf-8", "ignore")
-            if patch.strip() == "None":
+        if patch_array:
+            patch = list(patch_array.values())[0]
+            if patch is not None:
+                patch = patch.decode("utf-8", "ignore")
+                if patch.strip() == "None":
+                    patch = ""
+            else:
                 patch = ""
-        else:
-            patch = ""
-
         return {
             'hardware': hardware,
             'version': version,
@@ -296,7 +297,7 @@ class H3CDeviceInfoCollector:
         version = ''
         patch = ''
 
-        reg_model = re.compile(r'Version\s+\S+.+(Release\s+\S+)[\s\S]+H3C\s+(\S+)[\s\S]+Copyright', re.I)
+        reg_model = re.compile(r'Version\s+\S+.+((?:Release)|(?:Feature)\s+\S+)[\s\S]+H3C\s+(\S+)[\s\S]+Copyright', re.I)
         hardware_array = reg_model.findall(sys_descr)
         if len(hardware_array) > 0:
             hardware_info = hardware_array[0]
@@ -469,23 +470,26 @@ class DeviceBaseInfoCollector:
             }
             
             logger.info(f"成功采集设备 {ip} 基础信息: 厂商={vendor}, 型号={hardware}")
-            return device_info
+
+            return {
+                "ip": ip,
+                "metric_name": "device_info",
+                "status": "ok",
+                "message": "采集成功",
+                "timestamp": int(time.time()),
+                "data": device_info,
+            }
             
         except Exception as e:
             logger.error(f"采集设备 {ip} 信息时发生错误: {str(e)}", exc_info=True)
             # 发生异常时返回固定格式，所有字段都有默认值
             return {
-                'ip': ip,
-                'vendor': '',
-                'model': '',
-                'version': '',
-                'patch': '',
-                'sysname': '',
-                'sysdescr': '',
-                'syslocation': '',
-                'syscontact': '',
-                'sysobjectid': '',
-                'sysuptime': 0
+                "ip": ip,
+                "metric_name": "device_info",
+                "status": "error",
+                "message": "采集失败"+str(e),
+                "timestamp": int(time.time()),
+                "data": {},
             }
     
 

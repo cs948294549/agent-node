@@ -81,5 +81,5 @@ class ifAliasParser(CommonIndexParser):
     接口描述信息
     """
     def __init__(self, default_ttl: int = 300, bulk_size: int = 10):
-        super().__init__("1.3.6.1.2.1.31.1.1.1.15", default_ttl, bulk_size)  # ifAlias
+        super().__init__("1.3.6.1.2.1.31.1.1.1.18", default_ttl, bulk_size)  # ifAlias
 

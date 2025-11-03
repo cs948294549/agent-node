@@ -23,8 +23,12 @@ executors = {
 scheduler = BackgroundScheduler(
     executors=executors,
     timezone='Asia/Shanghai',  # 设置时区为上海
-    job_defaults={'coalesce': False, 'max_instances': 1}  # 可选：配置作业默认值
+    job_defaults={'coalesce': False, 'max_instances': 2}  # 可选：配置作业默认值
 )
+'''
+配置max_instances=1时，可避免重复采集
+设置成2时，可生成
+'''
 
 # 导出scheduler实例
 __all__ = ['scheduler']

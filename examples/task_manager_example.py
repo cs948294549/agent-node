@@ -54,7 +54,7 @@ class CounterTask(BaseTask):
     def execute(self):
         """执行计数任务"""
         self.counter += 1
-        logger.info(f"计数: {self.counter}")
+        logger.info(f"计数: {self.counter}" + str(self.config))
         return {"count": self.counter, "timestamp": time.time()}
 
 
@@ -85,19 +85,28 @@ def main():
     # 注册计数任务，间隔2秒执行一次
     logger.info("注册计数任务...")
     task_manager.register_task(
-        task_id=CounterTask.TASK_ID,
+        task_instance_id="1010",
+        task_class_id=CounterTask.TASK_ID,
         config={"initial_count": 0},
         schedule_type="interval",
         schedule_config={"seconds": 5}
     )
 
-    time.sleep(20)
-
-    task_manager.update_task_schedule(
-        task_id=CounterTask.TASK_ID,
+    task_manager.register_task(
+        task_instance_id="1011",
+        task_class_id=CounterTask.TASK_ID,
+        config={"initial_count": 1},
         schedule_type="interval",
         schedule_config={"seconds": 2}
     )
+
+    # time.sleep(20)
+    #
+    # task_manager.update_task_schedule(
+    #     task_id=CounterTask.TASK_ID,
+    #     schedule_type="interval",
+    #     schedule_config={"seconds": 2}
+    # )
 
 
 if __name__ == "__main__":

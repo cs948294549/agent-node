@@ -36,7 +36,8 @@ def main():
     # 注册计数任务，间隔2秒执行一次
     logger.info("注册计数任务...")
     task_manager.register_task(
-        task_id=HeartbeatTask.TASK_ID,
+        task_instance_id="10101",
+        task_class_id=HeartbeatTask.TASK_ID,
         config={"initial_count": 0},
         schedule_type="interval",
         schedule_config={"seconds": 5}

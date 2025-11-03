@@ -24,7 +24,7 @@ class OIDParser(ABC):
     子类需要实现parse_data方法来解析特定OID返回的数据
     """
     
-    def __init__(self, oid_prefix: str, default_ttl: int = 300, bulk_size: int = 10):
+    def __init__(self, oid_prefix: str, default_ttl: int = 300, bulk_size: int = 10, coding="utf-8"):
         """
         初始化OID解析器
         
@@ -35,6 +35,7 @@ class OIDParser(ABC):
         self.oid_prefix = oid_prefix
         self.default_ttl = default_ttl
         self.bulk_size = bulk_size
+        self.coding = coding
 
         # 设置该OID前缀的TTL
         _snmp_cache_manager.set_oid_ttl(oid_prefix, default_ttl)
@@ -73,7 +74,7 @@ class OIDParser(ABC):
             
             # 缓存未命中、过期或不使用缓存，直接执行SNMP WALK获取原始数据
             logger.debug(f"执行SNMP WALK: IP={ip}, OID={self.oid_prefix}")
-            raw_data = snmpwalk(ip, community, self.oid_prefix, bulk_size=self.bulk_size)
+            raw_data = snmpwalk(ip, community, self.oid_prefix, bulk_size=self.bulk_size, coding=self.coding)
             
             if raw_data is None:
                 logger.warning(f"设备 {ip} 的OID {self.oid_prefix} 数据采集失败")

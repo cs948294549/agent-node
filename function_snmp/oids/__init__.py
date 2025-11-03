@@ -42,6 +42,16 @@ from function_snmp.oids.hwPatchTable_parser import (
     hwPatchVersionParser,
 )
 
+# 静态导入entPhysicalTable相关的所有解析器类
+from function_snmp.oids.entPhysicalTable_parser import (
+    entPhysicalDescrParser,
+    entPhysicalClassParser,
+    entPhysicalNameParser,
+    entPhysicalSoftwareRevParser,
+    entPhysicalSerialNumParser,
+    entPhysicalModelNameParser
+)
+
 # 定义__all__列表，指定可以被导入的公共接口
 __all__ = [
     'OIDParser',
@@ -69,6 +79,14 @@ __all__ = [
 
     #hwPatch相关解析器
     'hwPatchVersionParser',
+
+     # entPhysicalTable相关解析器
+    'entPhysicalDescrParser',
+    'entPhysicalClassParser',
+    'entPhysicalNameParser',
+    'entPhysicalSoftwareRevParser',
+    'entPhysicalSerialNumParser',
+    'entPhysicalModelNameParser'
 ]
 
 # 创建解析器名称到解析器类的映射字典
@@ -97,6 +115,15 @@ _PARSER_CLASSES = {
 
     # hwPatch相关解析器
     'hwPatchVersionParser': hwPatchVersionParser,
+    
+    # entPhysicalTable相关解析器
+    'entPhysicalDescrParser': entPhysicalDescrParser,
+    'entPhysicalClassParser': entPhysicalClassParser,
+    'entPhysicalNameParser': entPhysicalNameParser,
+    'entPhysicalSoftwareRevParser': entPhysicalSoftwareRevParser,
+    'entPhysicalSerialNumParser': entPhysicalSerialNumParser,
+    'entPhysicalModelNameParser': entPhysicalModelNameParser
+
 }
 
 def get_parser_by_name(name: str) -> Optional[Any]:

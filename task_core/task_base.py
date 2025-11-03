@@ -43,6 +43,30 @@ class BaseTask(ABC):
         self.failure_count: int = 0
         self.run_time: float = 0.0
         
+        # 设置当前任务的日志级别
+        self._setup_task_logger()
+    
+    def _setup_task_logger(self):
+        """
+        根据配置设置当前任务的日志级别
+        可以通过配置中的task_log_level单独设置此任务的日志级别
+        """
+        task_log_level = self.config.get('task_log_level', None)
+        if task_log_level:
+            try:
+                # 将字符串转换为logging模块的级别常量
+                numeric_level = getattr(logging, task_log_level.upper(), None)
+                if numeric_level is not None and isinstance(numeric_level, int):
+                    # 获取任务特定的logger
+                    task_logger = logging.getLogger(f'task_{self.TASK_ID}')
+                    task_logger.setLevel(numeric_level)
+                    # 同时也设置类实例的logger级别（如果存在）
+                    if hasattr(self, 'logger'):
+                        self.logger.setLevel(numeric_level)
+                    logger.debug(f"已设置任务 {self.TASK_ID} 日志级别为: {task_log_level}")
+            except (AttributeError, ValueError) as e:
+                logger.warning(f"无效的日志级别配置: {task_log_level}, 任务: {self.TASK_ID}, 错误: {str(e)}")
+        
     @abstractmethod
     def execute(self) -> Dict[str, Any]:
         """
@@ -84,7 +108,18 @@ class BaseTask(ABC):
                 "result": execution_result,
                 "message": "任务执行成功"
             }
-            
+
+            warning_interval = self.config.get("warning_interval", None)
+            if warning_interval is not None:
+                # 安全地将warning_interval转换为整数
+                try:
+                    warning_interval_int = int(warning_interval)
+                    if result["execution_time"] > warning_interval_int:
+                        logger.error(f"任务执行超时: {self.TASK_NAME} ({self.TASK_ID}), 耗时: {result['execution_time']}s")
+                except (ValueError, TypeError):
+                    logger.warning(
+                        f"warning_interval配置值无法转换为整数: {warning_interval}, 任务: {self.TASK_NAME} ({self.TASK_ID})")
+
             logger.info(f"任务执行成功: {self.TASK_NAME} ({self.TASK_ID}), 耗时: {result['execution_time']}s")
             
         except Exception as e:
