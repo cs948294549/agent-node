@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # 获取全局缓存管理器实例
 _snmp_cache_manager = get_cache_manager()
 
+MTU = 1500
 
 class OIDParser(ABC):
     """
@@ -74,7 +75,9 @@ class OIDParser(ABC):
             
             # 缓存未命中、过期或不使用缓存，直接执行SNMP WALK获取原始数据
             logger.debug(f"执行SNMP WALK: IP={ip}, OID={self.oid_prefix}")
-            raw_data = snmpwalk(ip, community, self.oid_prefix, bulk_size=self.bulk_size, coding=self.coding)
+            mtu_bulk_size = int(self.bulk_size/1500*MTU)
+
+            raw_data = snmpwalk(ip, community, self.oid_prefix, bulk_size=mtu_bulk_size, coding=self.coding)
             
             if raw_data is None:
                 logger.warning(f"设备 {ip} 的OID {self.oid_prefix} 数据采集失败")

@@ -1,5 +1,5 @@
 paramiko==2.10.4
 puresnmp==1.11.0
-aiosnmp==0.6.0
 flask==2.2.3
 apscheduler==3.10.4
+requests==2.32.5

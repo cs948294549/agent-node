@@ -4,10 +4,10 @@ from flask import Flask
 from api.api_routes import api_bp
 # 导入任务相关蓝图
 from api.tasks_routes import tasks_bp
+from api.snmp_routes import snmp_bp
+from api.agent_routes import agent_bp
 # 导入任务管理器
-from task_core import task_manager
-from task_core.task_factory import TaskFactory
-from task_implements.HeartbeatTask import HeartbeatTask
+from task_core.task_manager import task_manager
 
 def create_app():
     """
@@ -30,12 +30,14 @@ def create_app():
     app.register_blueprint(api_bp)
     # 注册任务相关蓝图（示例：展示如何扩展新的API端点）
     app.register_blueprint(tasks_bp)
+    app.register_blueprint(snmp_bp)
+    app.register_blueprint(agent_bp)
 
 
     # 像中心注册自身
-    TaskFactory.register_task_class(HeartbeatTask.TASK_ID, HeartbeatTask)
     task_manager.register_task(
-        task_id=HeartbeatTask.TASK_ID,
+        task_instance_id="heartbeat",
+        task_class_id="heartbeat",
         config={"interval": 10},
         schedule_type="interval",
         schedule_config={"seconds": 10}

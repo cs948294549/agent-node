@@ -325,5 +325,26 @@ class TaskManager:
         return tasks_info
 
 
+# 注册task_implements目录中的任务类
+from task_implements.DeviceBaseinfoTask import DeviceBaseinfoTask
+from task_implements.DeviceInterfaceTask import DeviceInterfaceBaseTask, DeviceInterfaceMetricTask, DeviceInterfaceStatusTask
+from task_implements.DevicePhysicalTask import DevicePhysicalTask
+from task_implements.HeartbeatTask import HeartbeatTask
+
 # 创建全局任务管理器实例
 task_manager = TaskManager()
+
+# 注册任务类到TaskFactory
+# 将任务类组织成列表，通过循环批量注册
+task_classes = [
+    DeviceBaseinfoTask,
+    DeviceInterfaceBaseTask,
+    DeviceInterfaceMetricTask,
+    DeviceInterfaceStatusTask,
+    DevicePhysicalTask,
+    HeartbeatTask
+]
+
+for task_class in task_classes:
+    task_manager.register_task_class(task_class.TASK_ID, task_class)
+

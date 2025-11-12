@@ -4,7 +4,6 @@
 包含各种具体任务的实现类
 """
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List
 from task_core.task_base import BaseTask
 # 导入设备信息采集模块
@@ -64,7 +63,8 @@ class DeviceBaseinfoTask(BaseTask):
             logger.info(f"设备信息采集完成，成功: {success_count}, 失败: {failed_count}")
             
             logger.debug("采集结果:{}".format(str(results)))
-            
+
+
             # 返回采集结果
             return {
                 'status': 'success',

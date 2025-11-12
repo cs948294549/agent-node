@@ -44,6 +44,7 @@ def main():
         ],  # 设备IP列表
         'community': 'public',  # SNMP团体字符串
         # 'task_log_level': 'debug'
+        'send_to_kafka': True
     }
 
     # 4. 注册并调度设备信息采集任务

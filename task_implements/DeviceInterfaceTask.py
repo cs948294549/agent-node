@@ -4,7 +4,6 @@
 负责采集设备的接口信息
 """
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List
 from task_core.task_base import BaseTask
 from collectors.device_interface_collector import collect_interface_basic_info, collect_interface_status, collect_interface_metric
@@ -64,13 +63,16 @@ class DeviceInterfaceBaseTask(BaseTask):
 
             logger.info("采集结果:{}".format(str(results)))
 
+
+            collect_data = list(results.values())
+
             # 返回采集结果
             return {
                 'status': 'success',
                 'total_devices': len(ip_list),
                 'success_count': success_count,
                 'failed_count': failed_count,
-                'data': results
+                'data': collect_data
             }
             
         except Exception as e:

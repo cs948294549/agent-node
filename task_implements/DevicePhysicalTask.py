@@ -65,14 +65,18 @@ class DevicePhysicalTask(BaseTask):
             logger.info(f"设备信息采集完成，成功: {success_count}, 失败: {failed_count}")
 
             logger.debug("采集结果:{}".format(str(results)))
-            # 返回采集结果
-            return {
+            
+            # 构建结果对象
+            execution_result = {
                 'status': 'success',
                 'total_devices': len(ip_list),
                 'success_count': success_count,
                 'failed_count': failed_count,
                 'data': results
             }
+            
+            # 返回采集结果
+            return execution_result
             
         except Exception as e:
                 logger.error(f"设备物理模块信息采集任务执行失败: {str(e)}")
