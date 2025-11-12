@@ -348,3 +348,6 @@ task_classes = [
 for task_class in task_classes:
     task_manager.register_task_class(task_class.TASK_ID, task_class)
 
+
+__all__ = ["task_manager"]
+

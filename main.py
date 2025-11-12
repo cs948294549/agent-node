@@ -4,7 +4,7 @@ from core.app import create_app
 from core.logger import setup_logger
 from config import Config
 # 导入任务管理器
-from task_core import task_manager
+from task_core.task_manager import task_manager
 
 
 # 初始化日志系统
