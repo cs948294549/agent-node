@@ -1,9 +1,14 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
 import platform
 import socket
 import time
 import psutil
 import os
+from api.api_response import APIResponse
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # 创建Agent相关的蓝图，前缀设置为/agent
 agent_bp = Blueprint('agent', __name__, url_prefix='/agent')
@@ -14,7 +19,8 @@ def heartbeat():
     Agent心跳检测端点
     控制中心通过此端点检查Agent是否正常运行
     """
-    return jsonify({
+    logger.info('Heartbeat received')
+    return APIResponse.success(data={
         'status': 'alive',
         'timestamp': time.time(),
         'message': 'Agent is running normally'
@@ -61,8 +67,7 @@ def get_agent_info():
             'start_time': psutil.Process(os.getpid()).create_time()
         }
         
-        return jsonify({
-            'success': True,
+        return APIResponse.success(data={
             'agent_info': {
                 'version': '1.0.0',  # Agent版本号
                 'system': system_info,
@@ -72,10 +77,8 @@ def get_agent_info():
             }
         })
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f'Error getting agent info: {str(e)}')
+        return APIResponse.server_error(message=str(e))
 
 @agent_bp.route('/probe', methods=['POST'])
 def agent_probe():
@@ -90,7 +93,8 @@ def agent_probe():
         timeout = data.get('timeout', 3)
         
         if not target_ip:
-            return jsonify({'error': 'target_ip参数不能为空'}), 400
+            logger.warning('Probe request missing target_ip')
+            return APIResponse.param_error(message='target_ip参数不能为空')
         
         # 根据探测类型执行不同的探测逻辑
         if probe_type == 'ping':
@@ -101,17 +105,16 @@ def agent_probe():
             port = data.get('port', 80)
             result = tcp_probe(target_ip, port, timeout)
         else:
-            return jsonify({'error': f'不支持的探测类型: {probe_type}'}), 400
+            logger.warning(f'Unsupported probe type: {probe_type}')
+        return APIResponse.param_error(message=f'不支持的探测类型: {probe_type}')
         
-        return jsonify({
-            'success': True,
+        logger.info(f'Probe completed successfully for {target_ip}')
+        return APIResponse.success(data={
             'probe_result': result
         })
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f'Error during probe: {str(e)}')
+        return APIResponse.server_error(message=str(e))
 
 def ping_probe(ip, timeout):
     """
