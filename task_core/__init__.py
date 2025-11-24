@@ -17,6 +17,14 @@ task_manager.register_task(
         schedule_type="interval",
         schedule_config={"seconds": 5}
     )
+
+
+任务属性
+warning_interval 告警检测
+send_to_kafka true/false 任务数据是否推送到kafka
+
+
+
 '''
 
 __all__ = []

@@ -11,6 +11,8 @@ import re
 import time
 from typing import Dict, List, Any, Optional, Protocol
 from function_snmp.snmp_collector import snmp_get, snmp_walk
+from config import Config
+
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +57,25 @@ VENDOR_IDENTIFIERS = {
     'juniper': ['juniper', 'junos'],
     'arista': ['arista', 'eos']
 }
+
+def _identify_device_vendor(sys_descr: str) -> str:
+    """
+    根据系统描述自动识别设备厂商
+
+    Args:
+        sys_descr: 系统描述字符串
+
+    Returns:
+        str: 识别出的厂商名称，默认为'unknown'
+    """
+    sys_descr_lower = sys_descr.lower() if sys_descr else ''
+
+    for vendor, identifiers in VENDOR_IDENTIFIERS.items():
+        for identifier in identifiers:
+            if identifier.lower() in sys_descr_lower:
+                return vendor
+
+    return 'unknown'
 
 
 class DeviceInfoCollectorStrategy(Protocol):
@@ -340,6 +361,47 @@ class DeviceInfoCollectorFactory:
             return DefaultDeviceInfoCollector(vendor)
 
 
+def _collect_vendor_specific_info(ip: str, community: str, vendor: str, sys_descr: str) -> Dict[str, str]:
+    """
+    采集厂商特定的设备信息（model、version、patch）
+
+    Args:
+        ip: 设备IP地址
+        community: SNMP团体字符串
+        vendor: 设备厂商
+
+    Returns:
+        Dict[str, str]: 包含model、version、patch字段的字典
+    """
+    try:
+        # 创建对应的厂商采集策略
+        collector = DeviceInfoCollectorFactory.create_collector(vendor)
+
+        # 采集厂商特定信息
+        vendor_specific_info = collector.collect_vendor_specific_info(ip, community)
+        vendor_descr_info = collector.extract_model(sys_descr)
+
+        hardware = vendor_descr_info.get('hardware', '') + vendor_specific_info.get('hardware', '')
+        version = vendor_descr_info.get('version', '') + vendor_specific_info.get('version', '')
+        patch = vendor_descr_info.get('patch', '') + vendor_specific_info.get('patch', '')
+
+
+        return {
+            'hardware': hardware,
+            'version': version,
+            'patch': patch
+        }
+
+    except Exception as e:
+        logger.error(f"采集设备 {ip} 厂商特定信息时发生错误: {str(e)}", exc_info=True)
+        # 发生错误时返回空值
+        return {
+            'hardware': "",
+            'version': "",
+            'patch': ""
+        }
+
+
 class DeviceBaseInfoCollector:
     """
     设备基础信息采集器
@@ -350,73 +412,8 @@ class DeviceBaseInfoCollector:
         """
         初始化设备基础信息采集器
         """
-        
-    def _identify_device_vendor(self, sys_descr: str) -> str:
-        """
-        根据系统描述自动识别设备厂商
-        
-        Args:
-            sys_descr: 系统描述字符串
-            
-        Returns:
-            str: 识别出的厂商名称，默认为'unknown'
-        """
-        sys_descr_lower = sys_descr.lower() if sys_descr else ''
-        
-        for vendor, identifiers in VENDOR_IDENTIFIERS.items():
-            for identifier in identifiers:
-                if identifier.lower() in sys_descr_lower:
-                    return vendor
-        
-        return 'unknown'
-    
-    def _extract_device_model(self, sys_descr: str, vendor: str) -> Dict[str, str]:
-        """
-        从系统描述中提取设备型号（作为备选）
-        
-        Args:
-            sys_descr: 系统描述字符串
-            vendor: 设备厂商
-            
-        Returns:
-            str: 提取的设备型号
-        """
-        # 不再使用策略中的extract_model方法，因为model将由collect_vendor_specific_info返回
-        # 保留此方法作为备选
-        if hasattr(DeviceInfoCollectorFactory.create_collector(vendor), 'extract_model'):
-            collector = DeviceInfoCollectorFactory.create_collector(vendor)
-            return collector.extract_model(sys_descr)
-        return {'hardware': '','version': '','patch': ''}
-    
-    def _collect_vendor_specific_info(self, ip: str, community: str, vendor: str) -> Dict[str, str]:
-        """
-        采集厂商特定的设备信息（model、version、patch）
-        
-        Args:
-            ip: 设备IP地址
-            community: SNMP团体字符串
-            vendor: 设备厂商
-            
-        Returns:
-            Dict[str, str]: 包含model、version、patch字段的字典
-        """
-        try:
-            # 创建对应的厂商采集策略
-            collector = DeviceInfoCollectorFactory.create_collector(vendor)
-            
-            # 采集厂商特定信息
-            return collector.collect_vendor_specific_info(ip, community)
-        
-        except Exception as e:
-            logger.error(f"采集设备 {ip} 厂商特定信息时发生错误: {str(e)}", exc_info=True)
-            # 发生错误时返回空值
-            return {
-                'model': '',
-                'version': '',
-                'patch': ''
-            }
-    
-    def collect_data(self, ip: str, community: str = 'public', vendor: str = None) -> Dict[str, Any]:
+
+    def collect_data(self, ip: str, community: str = Config.common_community, vendor: str = None) -> Dict[str, Any]:
         """
         采集单个设备的基础信息
         
@@ -441,18 +438,15 @@ class DeviceBaseInfoCollector:
             
             # 如果没有提供厂商信息，则自动识别
             if not vendor:
-                vendor = self._identify_device_vendor(sys_descr)
+                vendor = _identify_device_vendor(sys_descr)
                 logger.debug(f"自动识别设备 {ip} 厂商为: {vendor}")
-            
-            # 采集厂商特定信息从描述里提取（hardware、version、patch）
-            vendor_descr_info = self._extract_device_model(sys_descr, vendor)
-            
-            # 采集厂商特定信息，从特定的采集提取（hardware、version、patch）
-            vendor_specific_info = self._collect_vendor_specific_info(ip, community, vendor)
 
-            hardware = vendor_descr_info.get('hardware', '') + vendor_specific_info.get('hardware', '')
-            version = vendor_descr_info.get('version', '') + vendor_specific_info.get('version', '')
-            patch = vendor_descr_info.get('patch', '') + vendor_specific_info.get('patch', '')
+            # 采集厂商特定信息，从特定的采集提取（hardware、version、patch）
+            vendor_specific_info = _collect_vendor_specific_info(ip, community, vendor, sys_descr)
+
+            hardware = vendor_specific_info.get('hardware', '')
+            version = vendor_specific_info.get('version', '')
+            patch = vendor_specific_info.get('patch', '')
             
             # 构建固定格式的设备信息
             device_info = {
@@ -498,7 +492,7 @@ class DeviceBaseInfoCollector:
 global_collector = DeviceBaseInfoCollector()
 
 
-def collect_device_base_info(ip: str, community: str = 'public', version: str = 'v2c') -> Dict[str, Any]:
+def collect_device_base_info(ip: str, community: str = Config.common_community) -> Dict[str, Any]:
     """
     采集单个设备的基础信息（向后兼容接口）
     
@@ -512,24 +506,24 @@ def collect_device_base_info(ip: str, community: str = 'public', version: str = 
     """
     return global_collector.collect_data(ip, community)
 
-
-def clear_device_cache(ip: Optional[str] = None, community: Optional[str] = None):
-    """
-    清除设备缓存（当前版本未实现缓存）
-    
-    Args:
-        ip: 可选，指定IP地址
-        community: 可选，指定团体字符串
-    """
-    logger.debug("当前版本未实现缓存功能")
-
+def common_identify_vendor(ip: str, community: str = Config.common_community):
+    sys_descr = snmp_get(ip, community, STANDARD_OIDS.get("sysDescr"))
+    if not sys_descr:
+        logger.warning("设备{} 采集设备描述失败".format(ip))
+        return None
+    else:
+        vendor = _identify_device_vendor(sys_descr)
+        return vendor
 
 if __name__ == '__main__':
-    aa = global_collector.collect_data(ip='10.162.0.14', community='public')
-    print(aa)
+    # aa = global_collector.collect_data(ip='10.162.0.14', community='public')
+    # print(aa)
+    #
+    # aa = global_collector.collect_data(ip='10.80.163.98', community='public')
+    # print(aa)
+    #
+    # aa = global_collector.collect_data(ip='10.162.0.16', community='public')
+    # print(aa)
 
-    aa = global_collector.collect_data(ip='10.80.163.98', community='public')
-    print(aa)
-
-    aa = global_collector.collect_data(ip='10.162.0.16', community='public')
+    aa = common_identify_vendor("1.1.1.1", "public")
     print(aa)

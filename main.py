@@ -5,6 +5,8 @@ from core.logger import setup_logger
 from config import Config
 # 导入任务管理器
 from task_core.task_manager import task_manager
+# 导入syslog服务器
+from services.syslog_server import start_syslog_server, stop_syslog_server
 
 
 # 初始化日志系统
@@ -19,16 +21,26 @@ def main():
     scheduler.start()
     logger.info("任务调度器已启动")
     
+    # 启动syslog服务器
+    if Config.syslog_enable:
+        if start_syslog_server():
+            logger.info("Syslog服务器已启动")
+        else:
+            logger.error("Syslog服务器启动失败")
+    
     # 创建Flask应用
     app = create_app()
     
     # 运行Flask应用
     try:
         logger.info(f"Flask服务器启动在端口 {Config.service_port}")
-        app.run(host='0.0.0.0', port=Config.service_port, threaded=True, debug=False)
+        app.run(host=Config.service_ip, port=Config.service_port, threaded=True, debug=False)
     except KeyboardInterrupt:
         logger.info("收到停止信号，正在关闭...")
     finally:
+        # 停止syslog服务器
+        stop_syslog_server()
+        logger.info("Syslog服务器已停止")
         # 停止所有任务
         task_manager.stop_all_tasks()
         # 关闭调度器

@@ -2,11 +2,11 @@ from kafka import KafkaConsumer, KafkaProducer
 import json
 import logging
 from typing import Optional, List, Dict, Any, Union
-
+from config import Config
 logger = logging.getLogger(__name__)
 
 # Kafka服务器配置
-kafka_servers = ["localhost:9092"]
+kafka_servers = Config.kafka_server
 
 
 class TopicProducer:
@@ -117,6 +117,7 @@ class TopicConsumer:
 
 
 _collectProducer = None
+_syslogProducer = None
 
 def get_collect_producer() -> TopicProducer:
     """
@@ -126,8 +127,19 @@ def get_collect_producer() -> TopicProducer:
     """
     global _collectProducer
     if _collectProducer is None:
-        _collectProducer = TopicProducer("collect_data")
+        _collectProducer = TopicProducer(Config.collect_kafka_topic)
     return _collectProducer
+
+def get_syslog_producer() -> TopicProducer:
+    """
+    获取syslog服务的Kafka Producer实例
+    Returns:
+        TopicProducer: syslog的Kafka生产者实例
+    """
+    global _syslogProducer
+    if _syslogProducer is None:
+        _syslogProducer = TopicProducer("syslog_data")
+    return _syslogProducer
 
 
 if __name__ == '__main__':

@@ -9,11 +9,9 @@
 import logging
 import time
 from typing import Dict, List, Any, Optional
-
-from kafka.metrics import metric_name
-
 from function_snmp.snmp_collector import snmp_get, snmp_walk
 from collectors.collector_cache_manager import get_cache_manager
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +45,7 @@ INTERFACE_OIDS = {
 }
 
 # ====================== 接口基础信息采集 ======================
-def collect_interface_basic_info(ip: str, community: str) -> Dict[str, Any]:
+def collect_interface_basic_info(ip: str, community: str=Config.common_community) -> Dict[str, Any]:
     """
     采集设备接口基础信息
     
@@ -131,7 +129,7 @@ def collect_interface_basic_info(ip: str, community: str) -> Dict[str, Any]:
 
 
 # ====================== 接口状态信息采集 ======================
-def collect_interface_status(ip: str, community: str) -> Dict[str, Any]:
+def collect_interface_status(ip: str, community: str=Config.common_community) -> Dict[str, Any]:
     """
     采集设备接口状态信息
 
@@ -546,7 +544,7 @@ class InterfaceMetricCollector:
 metric_collector = InterfaceMetricCollector()
 
 
-def collect_interface_metric(ip: str, community: str = 'public', metric_type: str = "") -> Dict[str, Any]:
+def collect_interface_metric(ip: str, community: str = Config.common_community, metric_type: str = "") -> Dict[str, Any]:
     """
     采集单个设备的基础信息（向后兼容接口）
 

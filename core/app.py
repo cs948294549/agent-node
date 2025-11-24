@@ -6,8 +6,9 @@ from api.api_routes import api_bp
 from api.tasks_routes import tasks_bp
 from api.snmp_routes import snmp_bp
 from api.agent_routes import agent_bp
+
 # 导入任务管理器
-from task_core.task_manager import task_manager
+# from task_core.task_manager import task_manager
 
 def create_app():
     """
@@ -34,14 +35,16 @@ def create_app():
     app.register_blueprint(agent_bp)
 
 
-    # 像中心注册自身
-    task_manager.register_task(
-        task_instance_id="heartbeat",
-        task_class_id="heartbeat",
-        config={"interval": 10},
-        schedule_type="interval",
-        schedule_config={"seconds": 10}
-    )
+
+    # 向中心注册自身
+    # 修改成中心主动探测proxy，实现监控一体化
+    # task_manager.register_task(
+    #     task_instance_id="heartbeat",
+    #     task_class_id="heartbeat",
+    #     config={"interval": 10},
+    #     schedule_type="interval",
+    #     schedule_config={"seconds": 10}
+    # )
     
     return app
 

@@ -6,6 +6,8 @@ snmp_bp = Blueprint('snmp', __name__, url_prefix='/snmp')
 # 导入SNMP相关模块
 from function_snmp.snmp_collector import snmp_get, snmp_walk
 from collectors.device_info_collector import global_collector
+from config import Config
+
 
 @snmp_bp.route('/snmpget', methods=['POST'])
 def snmp_agent_get():
@@ -15,7 +17,7 @@ def snmp_agent_get():
     try:
         data = request.json
         ip = data.get('ip')
-        community = data.get('community', 'public')
+        community = data.get('community', Config.common_community)
         oid = data.get('oid')
         coding = data.get('coding', 'utf-8')
         
@@ -44,7 +46,7 @@ def snmp_agent_walk():
     try:
         data = request.json
         ip = data.get('ip')
-        community = data.get('community', 'public')
+        community = data.get('community', Config.common_community)
         oids = data.get('oids')
         bulk_size = data.get('bulk_size', 10)
         coding = data.get('coding', 'utf-8')
@@ -78,7 +80,7 @@ def snmp_collector_device_info():
     try:
         data = request.json
         ip = data.get('ip')
-        community = data.get('community', 'public')
+        community = data.get('community', Config.common_community)
         if not ip:
             return jsonify({'error': 'ip参数不能为空'}), 400
         
