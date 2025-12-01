@@ -50,3 +50,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # nohup python3 -u main.py > lapi.log 2>&1 &
