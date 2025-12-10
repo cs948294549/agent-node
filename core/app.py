@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 
 # 导入API蓝图和设置函数
 from api.api_routes import api_bp
@@ -35,6 +35,17 @@ def create_app():
     app.register_blueprint(agent_bp)
 
 
+    @app.before_request
+    def auth():
+        print(request.path)
+
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,session_id,sessionid')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,HEAD')
+        # 这里不能使用add方法，否则会出现 The 'Access-Control-Allow-Origin' header contains multiple values 的问题
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
 
     # 向中心注册自身
     # 修改成中心主动探测proxy，实现监控一体化

@@ -1,3 +1,5 @@
+import time
+
 from kafka import KafkaConsumer, KafkaProducer
 import json
 import logging
@@ -117,39 +119,58 @@ class TopicConsumer:
 
 
 _collectProducer = None
+def sendDataToCollector(messages, key: Optional[str] = None, partition: Optional[int] = None):
+    global _collectProducer
+    retry = 3
+    while retry>0:
+        retry-=1
+        if _collectProducer is None:
+            _collectProducer = TopicProducer(Config.collect_kafka_topic)
+        try:
+            _collectProducer.send(messages, key=key, partition=partition)
+            return True
+        except Exception as e:
+            logger.error("failed to send data to collector topic {}".format(str(e)))
+            _collectProducer = None
+            time.sleep(1)
+    return False
+
+
 _syslogProducer = None
 
-def get_collect_producer() -> TopicProducer:
-    """
-    获取全局Kafka客户端实例
-    Returns:
-        KafkaClient: Kafka客户端实例
-    """
-    global _collectProducer
-    if _collectProducer is None:
-        _collectProducer = TopicProducer(Config.collect_kafka_topic)
-    return _collectProducer
-
-def get_syslog_producer() -> TopicProducer:
-    """
-    获取syslog服务的Kafka Producer实例
-    Returns:
-        TopicProducer: syslog的Kafka生产者实例
-    """
+def sendDataToSyslog(messages, key: Optional[str] = None, partition: Optional[int] = None):
     global _syslogProducer
-    if _syslogProducer is None:
-        _syslogProducer = TopicProducer("syslog_data")
-    return _syslogProducer
+    retry = 3
+    while retry>0:
+        retry-=1
+        if _syslogProducer is None:
+            _syslogProducer = TopicProducer(Config.syslog_kafka_topic)
 
+        rt = _syslogProducer.send(messages, key=key, partition=partition)
+        if rt:
+            return True
+        else:
+            logger.error("failed to send data to syslog topic {}".format(str(Config.syslog_kafka_topic)))
+            _syslogProducer = None
+            time.sleep(1)
+    return False
 
 if __name__ == '__main__':
     # 示例：使用TopicProducer发送消息
-    producer = TopicProducer("collect_data")
-    producer.send({"message": "Hello Kafka"}, key="test-key")
-    producer.close()
+    # producer = TopicProducer("collect_data")
+    # producer.send({"message": "Hello Kafka"}, key="test-key")
+    # producer.close()
     
     # 示例：使用TopicConsumer消费消息
     # consumer = TopicConsumer("collect_data", group_id="test_group")
     # for msg in consumer.get_consumer():
     #     print(f"Received: {msg.value}, key: {msg.key}")
     # consumer.close()
+
+    sendDataToSyslog({"message": "Hello Kafka1"}, key="test-key")
+    sendDataToSyslog({"message": "Hello Kafka2"}, key="test-key")
+    sendDataToSyslog({"message": "Hello Kafka3"}, key="test-key")
+
+
+    sendDataToSyslog({"message": "Hello Kafka4"}, key="test-key")
+    sendDataToSyslog({"message": "Hello Kafka5"}, key="test-key")

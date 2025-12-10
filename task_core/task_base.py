@@ -8,7 +8,7 @@ import time
 import json
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Union
-from function_messaging.kafka_client import get_collect_producer
+from function_messaging.kafka_client import sendDataToCollector
 
 logger = logging.getLogger('task_base')
 
@@ -199,7 +199,25 @@ class BaseTask(ABC):
                 logger.debug(f"任务 {self.TASK_ID} 准备发送数据到Kafka")
                 
                 # 调用统一的发送方法
-                kafka_result = self.send_collected_data_to_kafka(execution_result)
+                collect_data = execution_result.get('data', {})
+                # 如果没有数据，直接返回
+                kafka_result = {"success": 0, "failed": 0}
+                if not collect_data:
+                    logger.debug(f"任务 {self.TASK_ID} 没有需要发送的数据")
+                else:
+                    if isinstance(collect_data, dict):
+                        for key, value in collect_data.items():
+                            rt = sendDataToCollector(messages=value, key=key)
+                            if rt:
+                                kafka_result["success"] += 1
+                            else:
+                                kafka_result["failed"] += 1
+                        # 记录发送结果
+                        total_sent = kafka_result['success'] + kafka_result['failed']
+                        logger.info(f"任务 {self.TASK_ID} 完成批量数据发送，总计 {total_sent} 条消息")
+                    else:
+                        logger.error(f"任务 {self.TASK_ID} 发送的数据格式不正确")
+
                 
                 logger.info(f"任务 {self.TASK_ID} 数据发送到Kafka完成: 成功{kafka_result['success']}, 失败{kafka_result['failed']}")
                 
@@ -211,48 +229,3 @@ class BaseTask(ABC):
             logger.error(f"任务 {self.TASK_ID} 自动发送Kafka消息时发生错误: {str(e)}")
             # 不抛出异常，避免影响主任务流程
 
-    def send_collected_data_to_kafka(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        发送采集任务结果到Kafka的统一接口
-        统一按批量方式处理数据
-        
-        Args:
-            result: 采集任务的执行结果
-            
-        Returns:
-            Dict[str, Any]: 发送结果统计
-        """
-        try:
-            # 获取Kafka生产者实例
-            producer = get_collect_producer()
-            collect_data = result.get('data', {})
-
-            # 如果没有数据，直接返回
-            if not collect_data:
-                logger.debug(f"任务 {self.TASK_ID} 没有需要发送的数据")
-                return {"success": 0, "failed": 0}
-
-            kafka_messages = []
-
-            if isinstance(collect_data, dict):
-                for key, value in collect_data.items():
-                    kafka_messages.append({
-                        "key": key,
-                        "value": value
-                    })
-            else:
-                logger.error(f"任务 {self.TASK_ID} 发送的数据格式不正确")
-
-            # 发送批量消息
-            result = producer.send_batch(kafka_messages)
-            
-            # 记录发送结果
-            total_sent = result['success'] + result['failed']
-            logger.info(f"任务 {self.TASK_ID} 完成批量数据发送，总计 {total_sent} 条消息")
-            
-            return result
-            
-        except Exception as e:
-            logger.error(f"任务 {self.TASK_ID} 通过统一接口发送数据到Kafka时发生错误: {str(e)}")
-            # 估算失败数量
-            return {"success": 0, "failed": "-1"}

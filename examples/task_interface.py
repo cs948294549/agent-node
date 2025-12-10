@@ -46,31 +46,33 @@ def main():
             "10.162.0.10","10.162.0.11","10.162.0.12","10.162.0.13",
             "10.162.0.15","10.162.0.16",
         ],  # 设备IP列表
-        'community': 'public'  # SNMP团体字符串
+        'community': 'public',  # SNMP团体字符串
+        "send_to_kafka": True
     }
 
     # 4. 注册并调度设备信息采集任务
     logger.info(f"注册设备信息采集任务，配置: {task_base_config}")
-    # task_manager.register_task(
-    #     task_instance_id="1001",
-    #     task_class_id=DeviceInterfaceBaseTask.TASK_ID,
-    #     config=task_base_config,
-    #     schedule_type="interval",
-    #     schedule_config={"seconds": 60}  # 每60秒执行一次
-    # )
-    #
-    # task_manager.register_task(
-    #     task_instance_id="1002",
-    #     task_class_id=DeviceInterfaceStatusTask.TASK_ID,
-    #     config=task_base_config,
-    #     schedule_type="interval",
-    #     schedule_config={"seconds": 20}  # 每60秒执行一次
-    # )
+    task_manager.register_task(
+        task_instance_id="1001",
+        task_class_id=DeviceInterfaceBaseTask.TASK_ID,
+        config=task_base_config,
+        schedule_type="interval",
+        schedule_config={"seconds": 60}  # 每60秒执行一次
+    )
+
+    task_manager.register_task(
+        task_instance_id="1002",
+        task_class_id=DeviceInterfaceStatusTask.TASK_ID,
+        config=task_base_config,
+        schedule_type="interval",
+        schedule_config={"seconds": 20}  # 每60秒执行一次
+    )
 
     task_metric_config1 = task_base_config.copy()
     task_metric_config1.update({
         "warning_interval": 10,
         "metric_name": "interface_bps",
+        "send_to_kafka": True
     })
 
     task_manager.register_task(
@@ -81,18 +83,19 @@ def main():
         schedule_config={"seconds": 10}  # 每60秒执行一次
     )
 
-    # task_metric_config2 = task_base_config.copy()
-    # task_metric_config2.update({
-    #     "metric_name": "error_pps",
-    # })
-    #
-    # task_manager.register_task(
-    #     task_instance_id="1004",
-    #     task_class_id=DeviceInterfaceMetricTask.TASK_ID,
-    #     config=task_metric_config2,
-    #     schedule_type="interval",
-    #     schedule_config={"seconds": 15}  # 每60秒执行一次
-    # )
+    task_metric_config2 = task_base_config.copy()
+    task_metric_config2.update({
+        "metric_name": "interface_error_pps",
+        "send_to_kafka": True
+    })
+
+    task_manager.register_task(
+        task_instance_id="1004",
+        task_class_id=DeviceInterfaceMetricTask.TASK_ID,
+        config=task_metric_config2,
+        schedule_type="interval",
+        schedule_config={"seconds": 15}  # 每60秒执行一次
+    )
 
 
 if __name__ == "__main__":
