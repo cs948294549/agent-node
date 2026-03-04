@@ -13,3 +13,7 @@ def execAllFunctions(tasks, max_workers=8):
             future = p.submit(task["func"], *task["args"], **task["kwargs"])
             future.add_done_callback(functools.partial(cb, name=task["name"]))
     return result
+
+
+if __name__ == "__main__":
+    pass
