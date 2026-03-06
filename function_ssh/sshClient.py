@@ -71,7 +71,6 @@ class SSHClientFactory:
             if vendor in cls.VENDOR_CLASS_MAP:
                 device_class = cls.VENDOR_CLASS_MAP[vendor]
                 # 只使用3个必要参数初始化
-                time.sleep(10)
                 return device_class(host, username, password)
             else:
                 logger.error(f"不支持的厂商: {vendor}")
@@ -274,7 +273,7 @@ class SSHConnectionPool:
 
 
 # 全局连接池实例
-ssh_connection_pool = SSHConnectionPool(username="netops", password="netops@163")
+ssh_connection_pool = SSHConnectionPool(username=Config.ssh_username, password=Config.ssh_password)
 
 
 def run_ssh_command(host: str, commands: List[str], vendor: str = "") -> Dict[str, Any]:

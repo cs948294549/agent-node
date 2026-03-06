@@ -167,10 +167,12 @@ if __name__ == '__main__':
     #     print(f"Received: {msg.value}, key: {msg.key}")
     # consumer.close()
 
-    sendDataToSyslog({"message": "Hello Kafka1"}, key="test-key")
-    sendDataToSyslog({"message": "Hello Kafka2"}, key="test-key")
-    sendDataToSyslog({"message": "Hello Kafka3"}, key="test-key")
-
-
-    sendDataToSyslog({"message": "Hello Kafka4"}, key="test-key")
-    sendDataToSyslog({"message": "Hello Kafka5"}, key="test-key")
+    sendDataToSyslog({
+                         "message": "Jan  1 08:42:00:457 2011 vrrp-test-2 %%IFNET/3/PHY_UPDOWN: Bridge-Aggregation51 link status is up.",
+                         "ip": "1.1.1.1"}, key="1.1.1.1")
+    sendDataToSyslog({
+                         "message": "Jan  1 08:42:00:460 2011 vrrp-test-2 %%IFNET/5/LINK_UPDOWN: Line protocol on the interface Bridge-Aggregation51 is up.",
+                         "ip": "1.1.1.1"}, key="1.1.1.1")
+    sendDataToSyslog({
+                         "message": "Jan  1 08:42:00:542 2011 vrrp-test-2 %%IFNET/3/PHY_UPDOWN: Bridge-Aggregation51 link status is down.",
+                         "ip": "1.1.1.1"}, key="1.1.1.1")

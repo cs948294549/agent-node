@@ -374,8 +374,17 @@ class InterfaceMetricStrategy:
         Returns:
             List[Dict[str, Any]]: 采集的指标数据
         """
+        current_time = time.time()
         raw_data = self.collect_raw_data(device_ip, community)
-        return self.calculate_rates(device_ip, raw_data)
+        return {
+            "ip": device_ip,
+            "metric_name": self.metric_name,
+            "status": "ok",
+            "message": "采集成功",
+            "timestamp": int(current_time),
+            "data": raw_data,
+        }
+        # return self.calculate_rates(device_ip, raw_data)
 
 # 实现具体的指标采集策略
 class BytesMetricStrategy(InterfaceMetricStrategy):
@@ -593,23 +602,27 @@ if __name__ == "__main__":
     print(json.dumps(basic_info, indent=4))
     
     # 采集接口指标信息
-    metrics = metric_collector.collect_metric(test_ip, test_community, metric_type='bps', bit_width=64)
+    metrics = metric_collector.collect_metric(test_ip, test_community, metric_type='interface_bytes', bit_width=64)
     print(metrics)
-    metrics1 =metric_collector.collect_metric(test_ip, test_community, metric_type='pps', bit_width=64)
+    metrics1 =metric_collector.collect_metric(test_ip, test_community, metric_type='interface_bps', bit_width=64)
     print(metrics1)
 
 
-
-    time.sleep(10)
-    metrics = metric_collector.collect_metric(test_ip, test_community, metric_type='bps', bit_width=64)
-    print(json.dumps(metrics, indent=4))
-    metrics1 = metric_collector.collect_metric(test_ip, test_community, metric_type='pps', bit_width=64)
-    print(json.dumps(metrics1, indent=4))
-
-
-
-    sd = collect_interface_status(test_ip, test_community)
-    print(sd)
-
-    metrics2 = metric_collector.collect_metric(test_ip, test_community, metric_type='ppss', bit_width=64)
-    print(json.dumps(metrics2, indent=4))
+    a = snmp_walk("10.10.0.1", "mmmm", "1.3.6.1.2.1.31.1.1.1.6", ttl=10)
+    print(a)
+    #
+    #
+    #
+    # time.sleep(10)
+    # metrics = metric_collector.collect_metric(test_ip, test_community, metric_type='interface_bps', bit_width=64)
+    # print(json.dumps(metrics, indent=4))
+    # metrics1 = metric_collector.collect_metric(test_ip, test_community, metric_type='interface_pps', bit_width=64)
+    # print(json.dumps(metrics1, indent=4))
+    #
+    #
+    #
+    # sd = collect_interface_status(test_ip, test_community)
+    # print(sd)
+    #
+    # metrics2 = metric_collector.collect_metric(test_ip, test_community, metric_type='ppss', bit_width=64)
+    # print(json.dumps(metrics2, indent=4))

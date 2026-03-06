@@ -163,7 +163,6 @@ class SSHDeviceBase(ABC):
                     break
 
                 respond = self._send_command(i)
-                time.sleep(10)
                 if respond:
                     prompt, detail = respond
                     if prompt is False:

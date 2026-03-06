@@ -52,43 +52,6 @@ from function_snmp.oids.entPhysicalTable_parser import (
     entPhysicalModelNameParser
 )
 
-# 定义__all__列表，指定可以被导入的公共接口
-__all__ = [
-    'OIDParser',
-    # ifTable相关解析器
-    'ifDescrParser',
-    'ifMtuParser',
-    'ifInErrorsParser',
-    'ifOutErrorsParser',
-    'ifOutDiscardsParser',
-    'ifInDiscardsParser',
-    'ifSpeedParser',
-    'ifOperStatusParser',
-    'ifAdminStatusParser',
-    'ifPhysAddressParser',
-    # ifXTable相关解析器
-    'ifHCInOctetsParser',
-    'ifHCOutOctetsParser',
-    'ifHCInUcastPktsParser',
-    'ifHCOutUcastPktsParser',
-    'ifHCInBroadcastPktsParser',
-    'ifAliasParser',
-    'ifHCInMulticastPktsParser',
-    'ifHCOutMulticastPktsParser',
-    'ifHighSpeedParser',
-
-    #hwPatch相关解析器
-    'hwPatchVersionParser',
-
-     # entPhysicalTable相关解析器
-    'entPhysicalDescrParser',
-    'entPhysicalClassParser',
-    'entPhysicalNameParser',
-    'entPhysicalSoftwareRevParser',
-    'entPhysicalSerialNumParser',
-    'entPhysicalModelNameParser'
-]
-
 # 创建解析器名称到解析器类的映射字典
 _PARSER_CLASSES = {
     # ifTable相关解析器
@@ -148,3 +111,45 @@ def get_all_parsers() -> List[str]:
     """
     # 直接返回映射字典中的所有键
     return list(_PARSER_CLASSES.keys())
+
+
+# 定义__all__列表，指定可以被导入的公共接口
+__all__ = [
+    # 基础方法
+    'get_all_parsers',
+    'get_parser_by_name',
+
+    'OIDParser',
+    # ifTable相关解析器
+    'ifDescrParser',
+    'ifMtuParser',
+    'ifInErrorsParser',
+    'ifOutErrorsParser',
+    'ifOutDiscardsParser',
+    'ifInDiscardsParser',
+    'ifSpeedParser',
+    'ifOperStatusParser',
+    'ifAdminStatusParser',
+    'ifPhysAddressParser',
+    # ifXTable相关解析器
+    'ifHCInOctetsParser',
+    'ifHCOutOctetsParser',
+    'ifHCInUcastPktsParser',
+    'ifHCOutUcastPktsParser',
+    'ifHCInBroadcastPktsParser',
+    'ifAliasParser',
+    'ifHCInMulticastPktsParser',
+    'ifHCOutMulticastPktsParser',
+    'ifHighSpeedParser',
+
+    #hwPatch相关解析器
+    'hwPatchVersionParser',
+
+     # entPhysicalTable相关解析器
+    'entPhysicalDescrParser',
+    'entPhysicalClassParser',
+    'entPhysicalNameParser',
+    'entPhysicalSoftwareRevParser',
+    'entPhysicalSerialNumParser',
+    'entPhysicalModelNameParser'
+]
